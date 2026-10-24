@@ -1,5 +1,7 @@
 # Hotel Marcel Car Service — Uber-style redesign prototype
 
+**▶ Try it live: https://nsteinyale.github.io/hotel-marcel-ride-redesign/** (works on a phone or computer, nothing to install)
+
 A clickable prototype of four upgrades to Hotel Marcel's complimentary car service app ([ride.hotelmarcel.com](https://ride.hotelmarcel.com/ride)):
 
 1. **Two-way messaging** between guest and driver, with quick replies, a typing indicator and unread badges.

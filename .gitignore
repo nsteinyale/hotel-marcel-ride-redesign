@@ -1,6 +1,18 @@
+# secrets: never commit a real key
+.env
+.env.*
+!.env.example
+
+# test screenshots
 tests/output/
+
+# Office temp, scratch and OS files
 ~$*
 *.tmp
+*.log
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Node (if added later)
+node_modules/
