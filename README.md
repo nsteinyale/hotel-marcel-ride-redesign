@@ -61,6 +61,8 @@ It runs 18 checks in a hidden browser, including:
 - the phone layout
 - no JavaScript errors
 
+To test the live site instead of the local file, add its URL: `node tests/e2e.mjs https://nsteinyale.github.io/hotel-marcel-ride-redesign/`.
+
 It takes about a minute, mostly waiting for the simulated car. Add `--shots` to save screenshots to `tests/output/`. If your browser isn't found automatically, set the `BROWSER` environment variable to its path.
 
 ## Privacy built into the prototype

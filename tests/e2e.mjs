@@ -3,6 +3,7 @@
 //
 //   node tests/e2e.mjs            run all checks
 //   node tests/e2e.mjs --shots    also save screenshots to tests/output/
+//   node tests/e2e.mjs https://nsteinyale.github.io/hotel-marcel-ride-redesign/   test the live site
 //
 // Set BROWSER=/path/to/chrome-or-edge if yours isn't found automatically.
 import { spawn } from 'node:child_process';
@@ -12,7 +13,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const page = pathToFileURL(path.join(here, '..', 'index.html')).href;
+const urlArg = process.argv.find(a => /^https?:\/\//.test(a));
+const page = urlArg || pathToFileURL(path.join(here, '..', 'index.html')).href;
 const outDir = path.join(here, 'output');
 const saveShots = process.argv.includes('--shots');
 
