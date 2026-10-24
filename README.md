@@ -11,7 +11,7 @@ A clickable prototype of four upgrades to Hotel Marcel's complimentary car servi
 
 The guest and driver phones run side by side and share live state. Trips are sped up for the demo. The map is a simplified drawing of New Haven, not real GPS.
 
-The proposal for the hotel is **[Hotel-Marcel-Car-Service-Proposal-1.docx](Hotel-Marcel-Car-Service-Proposal-1.docx)**. It covers what exists today, the prototype, Grazzy, what's missing, privacy controls, how to pitch it, and a draft intro email.
+A short course-style write-up is in **[report.html](report.html)** (download and double-click to read it). The proposal for the hotel is **[Hotel-Marcel-Car-Service-Proposal-1.docx](Hotel-Marcel-Car-Service-Proposal-1.docx)**. It covers what exists today, the prototype, Grazzy, what's missing, privacy controls, how to pitch it, and a draft intro email.
 
 | Trip progress | Chat | Scheduled rides | Grazzy tip |
 |---|---|---|---|
@@ -89,6 +89,7 @@ The proposal (Section 5) covers what a production version would also need: maske
 ```
 index.html                                 the whole prototype (HTML + CSS + JS, no build step)
 tests/e2e.mjs                              automated end-to-end test
+report.html                                short final-project-style write-up (open by double-clicking)
 Hotel-Marcel-Car-Service-Proposal-1.docx   proposal for the hotel
 preview-*.png                              screenshots used here and in the proposal
 ```
