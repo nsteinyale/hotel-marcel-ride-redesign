@@ -1,4 +1,4 @@
-# Side Project II — Hotel Marcel Car Service Redesign
+# Side Project — Hotel Marcel Car Service Redesign
 
 *Uber-style redesign prototype · MGT 409 (Fall 2026) by N Stein · part of the [MGT 409 portfolio](https://github.com/nsteinyale/mgt409-portfolio)*
 
