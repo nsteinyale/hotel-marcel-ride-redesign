@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Hotel Marcel Car Service — Redesign Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* Palette lifted from ride.hotelmarcel.com */
+  :root{
+    --dark:#1c1c1e; --secondary:#8e8e93; --border:#1c1c1e14; --divider:#1c1c1e0f;
+    --brown:#866240; --brown-text:#7a5c3a; --brown-light:#fff8f0; --accent-light:#efebe6;
+    --beige:#ded7cd; --warm-gray:#fafaf8; --green:#4a8a5d; --green-bg:#4a8a5d14;
+    --amber:#c4913a; --amber-bg:#c4913a17; --red:#d64045; --blue:#0096ff;
+    --map-bg:#f1ede6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Fira Sans',system-ui,sans-serif;background:var(--accent-light);color:var(--dark);-webkit-font-smoothing:antialiased}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none}
+
+  /* ---------- Demo stage ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;max-width:1000px;margin:0 auto}
+  .topbar h1{font-size:15px;font-weight:500}
+  .topbar h1 small{display:block;color:var(--secondary);font-weight:400;font-size:12px;margin-top:2px}
+  .viewsw{display:flex;background:#fff;border-radius:999px;padding:3px;border:1px solid var(--border)}
+  .viewsw button{padding:6px 14px;border-radius:999px;font-size:13px;color:var(--secondary)}
+  .viewsw button.on{background:var(--dark);color:#fff}
+  .stage{display:flex;justify-content:center;gap:40px;padding:6px 24px 40px;flex-wrap:wrap}
+  .stage[data-view=guest] .phone.driver,.stage[data-view=driver] .phone.guest{display:none}
+  .phone-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .phone-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--brown-text)}
+  .phone{width:390px;height:800px;border-radius:46px;border:10px solid #111;background:#fff;position:relative;overflow:hidden;box-shadow:0 30px 60px -20px #0004}
+  .phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:30px;background:#111;border-radius:20px;z-index:50}
+  @media (max-width:880px){
+    .topbar{padding:10px 14px}
+    .topbar h1{display:none}
+    .viewsw button[data-view=both]{display:none}
+    .stage{padding:0;gap:0}
+    .phone-label{display:none}
+    .phone{width:100vw;height:calc(100dvh - 54px);border:0;border-radius:0;box-shadow:none}
+    .phone .notch,.statusbar{display:none}
+  }
+
+  /* ---------- Phone screen ---------- */
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;background:#fff}
+  .statusbar{height:46px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 30px 6px;font-size:14px;font-weight:600}
+  .appbar{flex:none;display:flex;align-items:center;justify-content:space-between;padding:8px 18px 10px;border-bottom:1px solid var(--divider)}
+  .appbar .brand{font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+  .appbar .brand small{display:block;letter-spacing:.02em;text-transform:none;color:var(--secondary);font-size:12px;margin-top:1px}
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+  .scroll{overflow-y:auto;flex:1;min-height:0}
+  .tabbar{flex:none;display:flex;border-top:1px solid var(--divider);background:#fff;padding-bottom:10px}
+  .tabbar button{flex:1;padding:10px 0 4px;font-size:12px;color:var(--secondary);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+  .tabbar button.on{color:var(--dark);font-weight:500}
+  .tabbar svg{width:22px;height:22px}
+
+  /* map */
+  .map{position:relative;background:var(--map-bg);flex:none;overflow:hidden}
+  .map svg{display:block;width:100%;height:100%}
+  .map.h-sm{height:230px}.map.h-md{height:330px}
+  .map-chip{position:absolute;top:12px;left:12px;background:var(--dark);color:#fff;font-size:13px;padding:7px 12px;border-radius:999px;font-weight:500;box-shadow:0 4px 12px #0003}
+  .map-note{position:absolute;right:10px;top:8px;font-size:9px;color:#0006}
+
+  /* sheet */
+  .sheet{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+  .row{display:flex;align-items:center;gap:10px}
+  .between{justify-content:space-between}
+  h2{font-size:21px;font-weight:500;letter-spacing:-.01em}
+  h3{font-size:13px;font-weight:500;color:var(--secondary);text-transform:uppercase;letter-spacing:.06em}
+  .muted{color:var(--secondary);font-size:14px}
+  .free{font-size:12px;background:var(--green-bg);color:var(--green);padding:4px 9px;border-radius:999px;font-weight:500;white-space:nowrap}
+  .seg{display:flex;background:var(--accent-light);border-radius:12px;padding:3px}
+  .seg button{flex:1;padding:9px;border-radius:10px;font-size:14px;color:var(--brown-text);display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg button.on{background:#fff;color:var(--dark);font-weight:500;box-shadow:0 1px 3px #0002}
+  .seg svg{width:16px;height:16px}
+  .fields{border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative}
+  .fields::before{content:"";position:absolute;left:22px;top:28px;bottom:28px;width:2px;background:var(--beige)}
+  .field{display:flex;align-items:center;gap:12px;padding:0 14px;height:52px;background:var(--warm-gray)}
+  .field+.field{border-top:1px solid var(--border)}
+  .field select,.field input{flex:1;border:0;background:transparent;outline:none;font-size:15px;height:100%;appearance:none;-webkit-appearance:none}
+  .pin-dot{width:10px;height:10px;border-radius:50%;border:3px solid var(--dark);background:#fff;flex:none;position:relative;z-index:1}
+  .pin-sq{width:10px;height:10px;background:var(--dark);flex:none;position:relative;z-index:1}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;font-size:13px;text-align:center;line-height:1.25}
+  .chip b{display:block;font-weight:500;font-size:14px}
+  .chip.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+  .sel{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--warm-gray);font-size:15px}
+  .when-summary{background:var(--brown-light);color:var(--brown-text);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+  .when-summary svg{width:18px;height:18px;flex:none}
+  .stepper{display:flex;align-items:center;gap:12px}
+  .stepper button{width:32px;height:32px;border-radius:50%;background:var(--accent-light);font-size:18px}
+  .note{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--warm-gray);font-size:15px;outline:none}
+  .btn{width:100%;padding:15px;border-radius:14px;background:var(--dark);color:#fff;font-size:16px;font-weight:500}
+  .btn svg{width:18px;height:18px;flex:none}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.brown{background:var(--brown)}
+  .btn.green{background:var(--green)}
+  .btn.ghost{background:var(--accent-light);color:var(--dark)}
+  .btn.danger{background:#fff;color:var(--red);border:1px solid #d6404540}
+  .btn.sm{padding:10px 12px;font-size:14px;border-radius:12px;width:auto}
+  .btn.pulse{animation:pulse 1.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 #4a8a5d80}70%{box-shadow:0 0 0 12px #4a8a5d00}100%{box-shadow:0 0 0 0 #4a8a5d00}}
+  .fine{font-size:12px;color:var(--secondary);line-height:1.45}
+  .banner{display:flex;gap:10px;align-items:center;background:var(--brown-light);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--brown-text)}
+  .banner svg{width:18px;height:18px;flex:none}
+  .banner button{margin-left:auto;font-weight:500;text-decoration:underline;color:var(--brown-text)}
+
+  /* trip progress */
+  .progress{display:flex;flex-direction:column;gap:6px}
+  .track{display:flex;align-items:center}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--beige);flex:none;transition:background .3s}
+  .dot.done{background:var(--dark)}
+  .dot.now{background:var(--brown);box-shadow:0 0 0 4px #86624030}
+  .segbar{flex:1;height:4px;background:var(--beige);border-radius:2px;margin:0 3px;overflow:hidden}
+  .segbar i{display:block;height:100%;background:var(--dark);width:0;transition:width .12s linear}
+  .labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--secondary)}
+  .labels span{width:20%;text-align:center}.labels span:first-child{text-align:left}.labels span:last-child{text-align:right}
+  .labels span.on{color:var(--dark);font-weight:500}
+  .stats{display:flex;gap:8px}
+  .stat{flex:1;background:var(--warm-gray);border:1px solid var(--border);border-radius:12px;padding:9px 10px}
+  .stat small{display:block;font-size:11px;color:var(--secondary)}
+  .stat b{font-size:17px;font-weight:500}
+  .card{border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fff}
+  .person{display:flex;align-items:center;gap:12px}
+  .av{width:44px;height:44px;border-radius:50%;background:var(--brown);color:#fff;display:grid;place-items:center;font-weight:500;flex:none}
+  .person .who{flex:1;min-width:0}
+  .person .who b{font-weight:500;display:block}
+  .person .who small{color:var(--secondary);font-size:13px}
+  .plate{font-size:12px;border:1px solid var(--dark);border-radius:6px;padding:2px 6px;font-weight:600;letter-spacing:.05em}
+  .actions{display:flex;gap:8px}
+  .act{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:12px;background:var(--accent-light);font-size:14px;font-weight:500;position:relative}
+  a.act{color:inherit;text-decoration:none}
+  .act svg{width:18px;height:18px}
+  .act:disabled{opacity:.4;cursor:default}
+  .badge{position:absolute;top:-6px;right:-4px;background:var(--red);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px;font-weight:600}
+  .tabbar .badge{top:2px;right:calc(50% - 22px)}
+  .route-mini{display:grid;grid-template-columns:14px 1fr;gap:4px 10px;align-items:center;font-size:14px}
+  .route-mini small{color:var(--secondary);display:block;font-size:12px}
+  .tag{font-size:12px;padding:3px 8px;border-radius:999px;font-weight:500;white-space:nowrap}
+  .tag.amber{background:var(--amber-bg);color:var(--amber)}
+  .tag.green{background:var(--green-bg);color:var(--green)}
+  .tag.grey{background:var(--accent-light);color:var(--secondary)}
+  .tag.red{background:#d6404518;color:var(--red)}
+  .list{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .empty{text-align:center;color:var(--secondary);padding:40px 10px;font-size:14px}
+  .stars{display:flex;gap:6px;justify-content:center}
+  .stars button{font-size:34px;color:var(--beige)}
+  .stars button.on{color:var(--amber)}
+  .tipbtn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;border:1px solid var(--brown);background:var(--brown-light);color:var(--brown);border-radius:14px;padding:14px;font-size:16px;font-weight:500;text-decoration:none}
+  .tipbtn svg{width:18px;height:18px}
+  .tipbtn.done{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+  .scrim{position:absolute;inset:0;background:#0006;z-index:35;display:flex;align-items:flex-end}
+  .tipsheet{background:#fff;width:100%;border-radius:22px 22px 0 0;padding:20px 18px 22px;display:flex;flex-direction:column;gap:12px}
+  .tipsheet.enter{animation:up .2s ease-out}
+  .tipsheet ul{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--secondary)}
+  .tipsheet li{display:flex;gap:8px}.tipsheet li svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--brown)}
+  .privacy{display:flex;gap:6px;align-items:center;justify-content:center;font-size:11.5px;color:var(--secondary);padding:6px 12px 0}
+  .privacy svg{width:12px;height:12px}
+  .promo{background:var(--brown-light);border-radius:14px;padding:14px;color:var(--brown-text);font-size:14px;text-align:center}
+
+  /* chat */
+  .chat{position:absolute;inset:0;background:#fff;z-index:30;display:flex;flex-direction:column}
+  .chat.enter{animation:up .2s ease-out}
+  @keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+  .chat header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--divider)}
+  .chat header .av{width:38px;height:38px;font-size:14px}
+  .chat header .who{flex:1}
+  .chat header .who b{font-weight:500;display:block}
+  .chat header .who small{font-size:12px;color:var(--secondary)}
+  .iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent-light)}
+  .iconbtn svg{width:18px;height:18px}
+  .msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px;background:var(--warm-gray)}
+  .bub{max-width:78%;padding:9px 12px;border-radius:18px;font-size:15px;line-height:1.35;word-wrap:break-word}
+  .bub.me{align-self:flex-end;background:var(--dark);color:#fff;border-bottom-right-radius:6px}
+  .bub.them{align-self:flex-start;background:#fff;border:1px solid var(--border);border-bottom-left-radius:6px}
+  .bub time{display:block;font-size:10.5px;opacity:.55;margin-top:3px}
+  .sys{align-self:center;font-size:12px;color:var(--secondary);padding:6px 0;text-align:center}
+  .typing{align-self:flex-start;font-size:12px;color:var(--secondary);font-style:italic;padding:2px 4px}
+  .quick{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;scrollbar-width:none}
+  .quick::-webkit-scrollbar{display:none}
+  .quick button{flex:none;border:1px solid var(--border);border-radius:999px;padding:7px 12px;font-size:13px;background:#fff}
+  .composer{display:flex;gap:8px;padding:10px 12px 14px}
+  .composer input{flex:1;border:1px solid var(--border);border-radius:999px;padding:11px 16px;outline:none;font-size:15px;background:var(--warm-gray)}
+  .composer button{width:44px;height:44px;border-radius:50%;background:var(--dark);color:#fff;display:grid;place-items:center}
+  .composer button:disabled{opacity:.3}
+  .composer svg{width:18px;height:18px}
+
+  /* toast */
+  .toast{position:absolute;left:12px;right:12px;top:54px;z-index:40;background:var(--dark);color:#fff;border-radius:16px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:center;box-shadow:0 10px 30px #0004;text-align:left}
+  .toast.enter{animation:drop .25s ease-out}
+  .toast svg{width:20px;height:20px;flex:none}
+  @keyframes drop{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+  @media (max-width:880px){.toast{top:10px}}
+
+  /* driver */
+  .dhead{display:flex;align-items:center;gap:10px}
+  .online{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--green);font-weight:500}
+  .online::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .reqcard{border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .reqcard.now{border-color:var(--brown);box-shadow:0 0 0 3px #86624018}
+  .meta{display:flex;gap:12px;font-size:13px;color:var(--secondary);flex-wrap:wrap}
+  @media (max-width:880px){.statusbar{display:none}}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Hotel Marcel Car Service — redesign prototype<small>Guest and driver run live side by side. Trips are sped up for the demo.</small></h1>
+    <div class="viewsw" id="viewsw">
+      <button data-view="both" class="on">Both</button>
+      <button data-view="guest">Guest</button>
+      <button data-view="driver">Driver</button>
+    </div>
+  </div>
+  <div class="stage" id="stage" data-view="both">
+    <div class="phone-col"><div class="phone-label">Guest</div><div class="phone guest" data-phone="guest"><div class="notch"></div><div class="screen" id="guest"></div></div></div>
+    <div class="phone-col"><div class="phone-label">Driver</div><div class="phone driver" data-phone="driver"><div class="notch"></div><div class="screen" id="driver"></div></div></div>
+  </div>
+
+<script>
+/* ======================= Data ======================= */
+// Stylized New Haven map. Every place sits on a street intersection (grid of 40).
+const PLACES = {
+  hotel:    {name:'Hotel Marcel',             short:'Hotel Marcel', sub:'500 Sargent Dr',        x:260, y:300},
+  som:      {name:'Yale School of Management',short:'Yale SOM',     sub:'165 Whitney Ave',       x:220, y:20},
+  green:    {name:'New Haven Green',          short:'The Green',    sub:'Chapel & Church St',    x:140, y:100},
+  station:  {name:'Union Station',            short:'Union Station',sub:'50 Union Ave',          x:100, y:300},
+  hospital: {name:'Yale New Haven Hospital',  short:'YNHH',         sub:'20 York St',            x:60,  y:180},
+  wooster:  {name:'Wooster Square',           short:'Wooster Sq',   sub:'Wooster Pl',            x:340, y:140},
+  airport:  {name:'Tweed Airport (HVN)',      short:'Tweed Airport',sub:'155 Burr St',           x:380, y:260},
+};
+// tipLink = the driver's Grazzy profile. The live app already stores a per-driver "Tip link" in Desk → Settings → Drivers;
+// the front desk would paste each driver's Grazzy URL there. Placeholder until the hotel shares real links.
+const DRIVER = {name:'Marcus R.', first:'Marcus', initials:'MR', car:'Black Hyundai Palisade', plate:'MRCL 2', phone:'(203) 555-0142',
+                tipLink:'https://www.grazzy.com/'};
+// Drivers only ever see first name + last initial, never the room number (privacy: minimum necessary).
+const GUEST  = {name:'Jordan L.', first:'Jordan', initials:'JL', room:'412'};
+const LIVE = ['requested','en_route','at_pickup','in_progress'];
+const MI_PER_UNIT = 0.006, MIN_PER_MI = 3, SIM_UNITS_PER_SEC = 12;
+
+const S = {
+  rides: [],
+  driverPos: {x:100, y:60},
+  guestTab: 'ride', driverTab: 'queue',
+  chat: {guest:false, driver:false}, chatEnter: {guest:false, driver:false},
+  drafts: {guest:'', driver:''},
+  toasts: {guest:null, driver:null},
+  form: {mode:'now', pickup:'hotel', dropoff:'', pax:1, note:'', day:0, time:''},
+  editing: null, confirmCancel: null, view: 'both', tipSheet: null,
+};
+let seq = 1;
+
+/* ======================= Helpers ======================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = t => new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+function dayStart(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+offset); return d; }
+function fmtDay(t){
+  const d = new Date(t); d.setHours(0,0,0,0);
+  const diff = Math.round((d - dayStart(0)) / 864e5);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  return d.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'});
+}
+const fmtWhen = t => `${fmtDay(t)} · ${fmtTime(t)}`;
+function fromNow(t){
+  const m = Math.round((t - Date.now())/6e4);
+  if (m < 60) return `in ${Math.max(m,0)} min`;
+  const h = Math.round(m/60);
+  return h < 24 ? `in ${h} h` : `in ${Math.round(h/24)} d`;
+}
+// Bookable slots: every 15 min, 7:00 AM – 11:00 PM, at least 30 min out.
+function slotsFor(dayOffset){
+  const out = [], base = dayStart(dayOffset), min = Date.now() + 30*6e4;
+  for (let m = 7*60; m <= 23*60; m += 15){
+    const t = new Date(base.getTime() + m*6e4);
+    if (t.getTime() >= min) out.push(`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`);
+  }
+  return out;
+}
+function whenFromForm(){
+  const [h, m] = S.form.time.split(':').map(Number);
+  const d = dayStart(S.form.day); d.setHours(h, m); return d.getTime();
+}
+
+// Geometry
+function route(a, b, vertFirst){
+  if (a.x === b.x && a.y === b.y) return [a, b];
+  return vertFirst ? [a, {x:a.x, y:b.y}, b] : [a, {x:b.x, y:a.y}, b];
+}
+const segLen = (p, q) => Math.hypot(q.x-p.x, q.y-p.y);
+const plen = pts => pts.slice(1).reduce((s, p, i) => s + segLen(pts[i], p), 0);
+function pointAt(pts, d){
+  for (let i = 1; i < pts.length; i++){
+    const L = segLen(pts[i-1], pts[i]);
+    if (d <= L || i === pts.length-1){
+      const f = L ? Math.min(d/L, 1) : 1, a = pts[i-1], b = pts[i];
+      return {x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f, ang:Math.atan2(b.y-a.y, b.x-a.x)*180/Math.PI, seg:i-1};
+    }
+    d -= L;
+  }
+  return {...pts[0], ang:0, seg:0};
+}
+const pathD = pts => 'M' + pts.map(p => `${p.x},${p.y}`).join(' L');
+const miles = u => (u*MI_PER_UNIT).toFixed(1);
+const etaMin = u => Math.max(1, Math.ceil(u*MI_PER_UNIT*MIN_PER_MI));
+
+const guestRide  = () => S.rides.find(r => LIVE.includes(r.status)) || S.rides.find(r => r.status === 'completed' && !r.dismissed);
+const driverRide = () => S.rides.find(r => r.driver && ['en_route','at_pickup','in_progress'].includes(r.status));
+const upcoming   = () => S.rides.filter(r => ['scheduled','confirmed'].includes(r.status)).sort((a,b) => a.when - b.when);
+const chatOpenFor = r => r && r.driver && !['completed','cancelled'].includes(r.status);
+
+// Live position / progress of a ride
+function live(r){
+  const tripL = plen(r.tripPts);
+  if (!r.approachPts || r.status === 'requested' || r.status === 'scheduled' || r.status === 'confirmed')
+    return {leg:'none', pos:{...S.driverPos, ang:0}, trav:0, L:tripL, remaining:tripL, tripRemaining:tripL};
+  const onTrip = r.status === 'in_progress' || r.status === 'completed';
+  const pts = onTrip ? r.tripPts : r.approachPts, L = plen(pts);
+  const p = (r.status === 'at_pickup' || r.status === 'completed') ? 1 : r.progress;
+  const pos = pointAt(pts, p*L);
+  return {leg: onTrip ? 'trip' : 'approach', pos, trav:p*L, L, p, remaining:(1-p)*L, tripRemaining: onTrip ? (1-p)*L : tripL};
+}
+function stageFill(r){
+  const lv = live(r), p = lv.p ?? 0;
+  const idx = {requested:0, en_route:1, at_pickup:2, in_progress:3, completed:4}[r.status] ?? 0;
+  return {idx, segs:[idx>=1?1:0, idx===1?p:idx>1?1:0, idx>=3?1:0, idx===3?p:idx>3?1:0]};
+}
+
+/* ======================= Icons ======================= */
+const I = {
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  car:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17v2M18 17v2M3 13l2-6a2 2 0 0 1 2-1.4h10A2 2 0 0 1 19 7l2 6v4H3z"/><circle cx="7.5" cy="13.5" r=".5"/><circle cx="16.5" cy="13.5" r=".5"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+};
+
+/* ======================= Map ======================= */
+const BASE_MAP = (() => {
+  let s = '';
+  s += `<rect width="400" height="360" fill="#f1ede6"/>`;
+  s += `<rect x="146" y="106" width="68" height="28" rx="3" fill="#d9e5cf"/>`;            // the Green
+  s += `<rect x="306" y="26" width="68" height="68" rx="4" fill="#d9e5cf"/>`;             // East Rock-ish
+  s += `<path d="M0,360 L0,348 L200,336 L300,326 L400,318 L400,360Z" fill="#cfe0ea"/>`;   // harbor
+  for (let x = 20; x <= 380; x += 40) s += `<line x1="${x}" y1="0" x2="${x}" y2="320" stroke="#fff" stroke-width="${x===220?9:6}"/>`;
+  for (let y = 20; y <= 300; y += 40) s += `<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#fff" stroke-width="${y===140||y===300?9:6}"/>`;
+  s += `<line x1="0" y1="330" x2="400" y2="308" stroke="#f3dca6" stroke-width="8"/>`;     // I-95
+  s += `<text x="8" y="324" font-size="7" fill="#b39a6a" font-family="Fira Sans">I-95</text>`;
+  s += `<text x="226" y="74" font-size="7" fill="#a49c90" font-family="Fira Sans" transform="rotate(90 226 74)">Whitney Ave</text>`;
+  s += `<text x="24" y="136" font-size="7" fill="#a49c90" font-family="Fira Sans">Chapel St</text>`;
+  s += `<text x="24" y="296" font-size="7" fill="#a49c90" font-family="Fira Sans">Sargent Dr</text>`;
+  s += `<text x="300" y="350" font-size="8" fill="#8fb0c4" font-family="Fira Sans" font-style="italic">New Haven Harbor</text>`;
+  return s;
+})();
+
+function labelPin(p, kind, text){
+  const shape = kind === 'pickup'
+    ? `<circle cx="${p.x}" cy="${p.y}" r="7" fill="#1c1c1e"/><circle cx="${p.x}" cy="${p.y}" r="3" fill="#fff"/>`
+    : `<rect x="${p.x-6.5}" y="${p.y-6.5}" width="13" height="13" fill="#1c1c1e"/><rect x="${p.x-2.5}" y="${p.y-2.5}" width="5" height="5" fill="#fff"/>`;
+  const w = text.length*5.4 + 14, lx = Math.min(Math.max(p.x - w/2, 4), 396 - w), ly = p.y - 28 < 2 ? p.y + 12 : p.y - 28;
+  return shape + `<g><rect x="${lx}" y="${ly}" width="${w}" height="16" rx="8" fill="#fff" stroke="#1c1c1e22"/><text x="${lx+w/2}" y="${ly+11.3}" text-anchor="middle" font-size="9.5" font-family="Fira Sans" font-weight="500" fill="#1c1c1e">${esc(text)}</text></g>`;
+}
+function carSVG(pos, id){
+  return `<g data-car="${id}" transform="translate(${pos.x},${pos.y}) rotate(${pos.ang})">
+    <circle r="15" fill="#86624026"><animate attributeName="r" values="11;17;11" dur="2s" repeatCount="indefinite"/></circle>
+    <rect x="-10" y="-6" width="20" height="12" rx="3.5" fill="#1c1c1e"/>
+    <rect x="1" y="-4.5" width="5" height="9" rx="1.5" fill="#bccbd7"/><rect x="-8" y="-4.5" width="3.5" height="9" rx="1.2" fill="#bccbd7"/></g>`;
+}
+// One map for any state. Remaining route is dark; distance already driven greys out live.
+function mapSVG(r, preview){
+  let s = BASE_MAP;
+  if (!r){
+    const pu = PLACES[preview.pickup], dr = preview.dropoff && PLACES[preview.dropoff];
+    if (dr) s += `<path d="${pathD(route(pu, dr, true))}" fill="none" stroke="#1c1c1e" stroke-width="4" stroke-dasharray="2 7" stroke-linecap="round"/>`;
+    s += carSVG({...S.driverPos, ang:0}, 'idle');
+    s += labelPin(pu, 'pickup', pu.short);
+    if (dr) s += labelPin(dr, 'drop', dr.short);
+  } else {
+    const lv = live(r), pu = PLACES[r.pickup], dr = PLACES[r.dropoff];
+    if (lv.leg === 'approach'){
+      s += `<path d="${pathD(r.tripPts)}" fill="none" stroke="#866240" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" opacity=".7"/>`;
+      s += `<path d="${pathD(r.approachPts)}" fill="none" stroke="#1c1c1e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      s += `<path data-trav="${r.id}" d="${pathD(r.approachPts)}" fill="none" stroke="#c9c2b8" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:${lv.trav} 9999"/>`;
+    } else {
+      s += `<path d="${pathD(r.tripPts)}" fill="none" stroke="#1c1c1e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" ${lv.leg==='none'?'stroke-dasharray="2 7"':''}/>`;
+      if (lv.leg === 'trip') s += `<path data-trav="${r.id}" d="${pathD(r.tripPts)}" fill="none" stroke="#c9c2b8" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:${lv.trav} 9999"/>`;
+    }
+    if (r.status === 'requested') s += `<circle cx="${pu.x}" cy="${pu.y}" r="10" fill="none" stroke="#866240" stroke-width="2"><animate attributeName="r" values="8;30" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.6s" repeatCount="indefinite"/></circle>`;
+    s += labelPin(pu, 'pickup', pu.short) + labelPin(dr, 'drop', dr.short);
+    s += carSVG(lv.pos, r.id);
+  }
+  return `<svg viewBox="0 0 400 360" preserveAspectRatio="xMidYMid meet">${s}</svg>`;
+}
+
+/* ======================= Ride actions ======================= */
+function sys(r, text){ r.messages.push({from:'system', text, t:Date.now()}); }
+function newRide(when){
+  const f = S.form, pu = PLACES[f.pickup], dr = PLACES[f.dropoff];
+  return {id:seq++, status: when ? 'scheduled' : 'requested', when, created:Date.now(), pickup:f.pickup, dropoff:f.dropoff,
+          pax:f.pax, note:f.note.trim(), driver:null, messages:[], unread:{guest:0, driver:0}, progress:0,
+          tripPts: route(pu, dr, true), approachPts:null, rating:0};
+}
+function assign(r){
+  r.driver = DRIVER;
+  r.approachPts = route(S.driverPos, PLACES[r.pickup], false);
+  r.progress = 0;
+}
+function startDriving(r){
+  if (!r.approachPts) assign(r);
+  r.approachPts = route(S.driverPos, PLACES[r.pickup], false);
+  r.progress = 0; r.status = 'en_route';
+  if (plen(r.approachPts) < 1) { r.status = 'at_pickup'; r.arrivedAt = Date.now(); }
+}
+const chatTarget = {guest:null, driver:null};
+
+/* ======================= Simulation ======================= */
+let last = performance.now();
+setInterval(() => {
+  const now = performance.now(), dt = (now - last)/1000; last = now;
+  let changed = false;
+  for (const r of S.rides){
+    if (r.status !== 'en_route' && r.status !== 'in_progress') continue;
+    const pts = r.status === 'en_route' ? r.approachPts : r.tripPts;
+    const L = Math.max(plen(pts), 1);
+    if (r.progress >= 1) continue;
+    r.progress = Math.min(1, r.progress + dt * SIM_UNITS_PER_SEC / L);
+    if (r.progress >= 1){
+      changed = true;
+      if (r.status === 'en_route'){
+        r.status = 'at_pickup'; r.arrivedAt = Date.now();
+        sys(r, `${DRIVER.first} arrived at ${PLACES[r.pickup].short} · ${fmtTime(Date.now())}`);
+        toast('guest', `Your driver has arrived — ${DRIVER.car}, plate ${DRIVER.plate}.`);
+        toast('driver', `You've arrived. ${GUEST.first} has been notified.`);
+      } else {
+        toast('driver', `You've reached ${PLACES[r.dropoff].short}. Tap “Complete ride”.`);
+      }
+    }
+  }
+  if (changed) render(); else updateLive();
+}, 100);
+setInterval(() => render(), 30000); // keep clocks and "in X min" fresh
+
+function updateLive(){
+  for (const r of S.rides){
+    if (!['en_route','in_progress','at_pickup'].includes(r.status)) continue;
+    const lv = live(r), f = stageFill(r);
+    document.querySelectorAll(`[data-car="${r.id}"]`).forEach(g => g.setAttribute('transform', `translate(${lv.pos.x},${lv.pos.y}) rotate(${lv.pos.ang})`));
+    document.querySelectorAll(`[data-trav="${r.id}"]`).forEach(p => p.style.strokeDasharray = `${lv.trav} 9999`);
+    document.querySelectorAll(`[data-seg="${r.id}"]`).forEach(el => el.style.width = (f.segs[+el.dataset.i]*100) + '%');
+    for (const role of ['guest','driver']){
+      const t = tripText(r, role);
+      document.querySelectorAll(`[data-text="${r.id}-${role}"]`).forEach(el => el.textContent = t[el.dataset.k]);
+    }
+  }
+}
+
+/* ======================= Text ======================= */
+function tripText(r, role){
+  const lv = live(r), dr = PLACES[r.dropoff], pu = PLACES[r.pickup];
+  const pickupEta = etaMin(lv.leg === 'approach' ? lv.remaining : 0);
+  const dropEta = etaMin(lv.tripRemaining) + (lv.leg === 'approach' ? pickupEta : 0);
+  const arrive = fmtTime(Date.now() + dropEta*6e4);
+  const waitMin = r.arrivedAt ? Math.floor((Date.now() - r.arrivedAt)/6e4) : 0;
+  const map = {
+    requested:  {title: role==='guest' ? 'Finding your driver' : 'New request', sub:'Your driver has been notified. Wait times may vary if they’re finishing another trip.', chip:'Requesting…',
+                 a:'—', b:`${miles(lv.tripRemaining)} mi`, c:'—'},
+    en_route:   {title: role==='guest' ? `${DRIVER.first} is on the way` : `Picking up ${GUEST.first}`,
+                 sub: role==='guest' ? `Arriving at ${pu.short} in about ${pickupEta} min` : `Head to ${pu.name}`,
+                 chip:`Pickup in ${pickupEta} min`, a:`${pickupEta} min`, b:`${miles(lv.remaining)} mi`, c:arrive},
+    at_pickup:  {title: role==='guest' ? 'Your driver has arrived' : `Waiting for ${GUEST.first}`,
+                 sub: role==='guest' ? `Please meet them within 5 minutes. ${DRIVER.car} · ${DRIVER.plate}` : `Waiting ${waitMin} min · they've been notified`,
+                 chip:'Driver is here', a:'Now', b:'0.0 mi', c:arrive},
+    in_progress:{title:`Heading to ${dr.short}`, sub:`${lv.p >= 1 ? 'Arriving now' : `${etaMin(lv.remaining)} min · arrive around ${arrive}`}`,
+                 chip: lv.p >= 1 ? 'Arriving' : `${etaMin(lv.remaining)} min to ${dr.short}`, a:'Picked up', b:`${miles(lv.remaining)} mi`, c:arrive},
+    completed:  {title:'Ride Complete', sub:'', chip:'Arrived', a:'', b:'', c:''},
+  };
+  return map[r.status] || map.requested;
+}
+
+/* ======================= Views: shared ======================= */
+function statusbar(){ return `<div class="statusbar"><span>${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).replace(/\s?[AP]M/,'')}</span><span>●●● ▮</span></div>`; }
+function toastHTML(role){
+  const t = S.toasts[role]; if (!t) return '';
+  const enter = !t.shown; t.shown = true;
+  return `<button class="toast ${enter ? 'enter' : ''}" ${t.act ? `data-act="${t.act}" data-role="${role}" data-ride="${t.ride}"` : ''}>${t.act ? I.chat : I.bell}<span>${t.html}</span></button>`;
+}
+function toast(role, html, opts = {}){
+  const id = Math.random();
+  S.toasts[role] = {html, id, ...opts};
+  setTimeout(() => { if (S.toasts[role]?.id === id){ S.toasts[role] = null; render(role); } }, 4000);
+}
+function progressHTML(r){
+  const f = stageFill(r), names = ['Requested','On the way','Arrived','On trip','Dropped off'];
+  let track = '';
+  for (let i = 0; i < 5; i++){
+    track += `<span class="dot ${i < f.idx ? 'done' : i === f.idx ? 'now' : ''}"></span>`;
+    if (i < 4) track += `<span class="segbar"><i data-seg="${r.id}" data-i="${i}" style="width:${f.segs[i]*100}%"></i></span>`;
+  }
+  return `<div class="progress"><div class="track">${track}</div><div class="labels">${names.map((n,i) => `<span class="${i===f.idx?'on':''}">${n}</span>`).join('')}</div></div>`;
+}
+function statsHTML(r, role){
+  const t = tripText(r, role), k = `${r.id}-${role}`;
+  const firstLabel = r.status === 'in_progress' ? 'Status' : 'Pickup in';
+  return `<div class="stats">
+    <div class="stat"><small>${firstLabel}</small><b data-text="${k}" data-k="a">${t.a}</b></div>
+    <div class="stat"><small>${r.status === 'in_progress' ? 'Distance left' : 'Driver distance'}</small><b data-text="${k}" data-k="b">${t.b}</b></div>
+    <div class="stat"><small>Arrive by</small><b data-text="${k}" data-k="c">${t.c}</b></div></div>`;
+}
+function routeMini(r){
+  const pu = PLACES[r.pickup], dr = PLACES[r.dropoff];
+  return `<div class="route-mini"><span class="pin-dot"></span><div>${pu.name}<small>${pu.sub}</small></div><span class="pin-sq"></span><div>${dr.name}<small>${dr.sub}</small></div></div>`;
+}
+function chatHTML(role, r){
+  const other = role === 'guest' ? DRIVER : GUEST;
+  const subtitle = role === 'guest' ? `${DRIVER.car} · ${DRIVER.plate}` : `Ride to ${PLACES[r.dropoff].short}`;
+  const quick = role === 'guest'
+    ? ['I’m on my way down','I’m in the lobby','Running 2 min late','Where should I meet you?','Thank you!']
+    : ['I’m out front','I’m at the main entrance','Running a few min late','On my way!','No rush'];
+  const otherRole = role === 'guest' ? 'driver' : 'guest';
+  const msgs = r.messages.map(m => m.from === 'system'
+      ? `<div class="sys">${esc(m.text)}</div>`
+      : `<div class="bub ${m.from===role?'me':'them'}">${esc(m.text)}<time>${fmtTime(m.t)}</time></div>`).join('');
+  const typing = S.drafts[otherRole] && S.chat[otherRole] ? `<div class="typing">${other.first} is typing…</div>` : '';
+  const enter = S.chatEnter[role]; S.chatEnter[role] = false;
+  return `<div class="chat ${enter ? 'enter' : ''}">
+    <header><button class="iconbtn" data-act="closeChat" data-role="${role}" aria-label="Back">${I.back}</button>
+      <div class="av">${other.initials}</div><div class="who"><b>${other.name}</b><small>${subtitle}</small></div>
+      <a class="iconbtn" href="tel:" aria-label="Call through the hotel line" title="Calls connect through the hotel line, so neither number is shared">${I.phone}</a></header>
+    <div class="msgs" data-msgs="${role}">${msgs || `<div class="sys">Messages are shared only with your ${role==='guest'?'driver':'guest'} for this ride.</div>`}${typing}</div>
+    <div class="privacy">${I.lock}Only you and your ${role==='guest'?'driver':'guest'} see this chat. Deleted 30 days after the ride.</div>
+    <div class="quick">${quick.map(q => `<button data-act="quick" data-role="${role}" data-text="${esc(q)}">${q}</button>`).join('')}</div>
+    <form class="composer" data-send="${role}"><input data-draft="${role}" placeholder="Message ${other.first}…" value="${esc(S.drafts[role])}" autocomplete="off"/>
+      <button ${S.drafts[role].trim() ? '' : 'disabled'} aria-label="Send">${I.send}</button></form></div>`;
+}
+
+/* ======================= Views: guest ======================= */
+function guestHTML(){
+  const r = guestRide(), up = upcoming();
+  const chatRide = chatTarget.guest && S.rides.find(x => x.id === chatTarget.guest) || r;
+  let main;
+  if (S.guestTab === 'rides') main = guestRides(up);
+  else if (S.editing || !r) main = requestView(up);
+  else if (r.status === 'completed') main = completeView(r);
+  else main = tripView(r);
+  const unread = S.rides.reduce((n, x) => n + x.unread.guest, 0);
+  return `${statusbar()}
+    <div class="appbar"><div class="brand">Hotel Marcel<small>Car Service</small></div><span class="muted" style="font-size:13px">${GUEST.name} · Rm ${GUEST.room}</span></div>
+    <div class="body">${main}${toastHTML('guest')}${tipSheetHTML()}${S.chat.guest && chatOpenFor(chatRide) ? chatHTML('guest', chatRide) : ''}</div>
+    <nav class="tabbar">
+      <button data-act="gtab" data-v="ride" class="${S.guestTab==='ride'?'on':''}">${I.car}Ride${r && r.unread.guest ? `<span class="badge">${r.unread.guest}</span>` : ''}</button>
+      <button data-act="gtab" data-v="rides" class="${S.guestTab==='rides'?'on':''}">${I.cal}My rides${up.length ? `<span class="badge" style="background:var(--brown)">${up.length}</span>` : ''}</button>
+    </nav>`;
+}
+function requestView(up){
+  const f = S.form, later = f.mode === 'later', slots = slotsFor(f.day);
+  if (later && !slots.includes(f.time)) f.time = slots[0] || '';
+  const ok = f.dropoff && f.dropoff !== f.pickup && (!later || f.time);
+  const opts = (sel, ph) => (ph ? `<option value="">${ph}</option>` : '') + Object.entries(PLACES).map(([k,p]) => `<option value="${k}" ${sel===k?'selected':''}>${p.name}</option>`).join('');
+  const days = Array.from({length:7}, (_, i) => {
+    const d = dayStart(i), slotsLeft = slotsFor(i).length;
+    return `<button class="chip ${f.day===i?'on':''}" data-act="day" data-v="${i}" ${slotsLeft?'':'disabled style="opacity:.35"'}><b>${i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString([], {weekday:'short'})}</b>${d.toLocaleDateString([], {month:'short', day:'numeric'})}</button>`;
+  }).join('');
+  const nextUp = !S.editing && up[0];
+  return `<div class="scroll">
+    <div class="map h-sm">${mapSVG(null, f)}<span class="map-note">Map is illustrative</span></div>
+    <div class="sheet">
+      ${nextUp ? `<div class="banner">${I.cal}<span>Upcoming: <b>${fmtWhen(nextUp.when)}</b> to ${PLACES[nextUp.dropoff].short}</span><button data-act="gtab" data-v="rides">View</button></div>` : ''}
+      <div class="row between"><h2>${S.editing ? 'Change scheduled ride' : 'Request a Ride'}</h2><span class="free">Complimentary</span></div>
+      ${S.editing ? '' : `<div class="seg">
+        <button data-act="mode" data-v="now" class="${!later?'on':''}">${I.car}Ride now</button>
+        <button data-act="mode" data-v="later" class="${later?'on':''}">${I.cal}Schedule</button></div>`}
+      <div class="fields">
+        <label class="field"><span class="pin-dot"></span><select data-model="pickup" aria-label="Pickup">${opts(f.pickup)}</select></label>
+        <label class="field"><span class="pin-sq"></span><select data-model="dropoff" aria-label="Drop-off">${opts(f.dropoff, 'Where to?')}</select></label>
+      </div>
+      ${later ? `
+        <div class="chips">${days}</div>
+        <select class="sel" data-model="time" aria-label="Pickup time">${slots.map(s => `<option value="${s}" ${s===f.time?'selected':''}>${fmtTime(dayStart(f.day).getTime() + (+s.slice(0,2)*60 + +s.slice(3))*6e4)}</option>`).join('') || '<option>No times left today</option>'}</select>
+        ${f.time ? `<div class="when-summary">${I.clock}<span>Pickup <b>${fmtWhen(whenFromForm())}</b> · a driver will confirm, and you can message them before the ride.</span></div>` : ''}` : ''}
+      <div class="row between"><span>Passengers</span><div class="stepper"><button data-act="pax" data-v="-1">−</button><b>${f.pax}</b><button data-act="pax" data-v="1">+</button></div></div>
+      <input class="note" data-model="note" placeholder="Note for driver (optional)" value="${esc(f.note)}"/>
+      <button class="btn" data-act="${S.editing ? 'saveEdit' : 'request'}" ${ok ? '' : 'disabled'}>${S.editing ? 'Save changes' : later ? 'Schedule Ride' : 'Request Ride'}</button>
+      ${S.editing ? `<button class="btn ghost" data-act="cancelEdit">Keep original time</button>` : ''}
+      <p class="fine">Car seats are not provided. Per CT law, all passengers must be at least 8 years old and 60 pounds.</p>
+    </div></div>`;
+}
+function tripView(r){
+  const t = tripText(r, 'guest'), k = `${r.id}-guest`, assigned = !!r.driver;
+  const canCancel = ['requested','en_route','at_pickup'].includes(r.status);
+  return `<div class="scroll">
+    <div class="map h-md">${mapSVG(r)}<span class="map-chip" data-text="${k}" data-k="chip">${t.chip}</span><span class="map-note">Map is illustrative</span></div>
+    <div class="sheet">
+      <div><h2 data-text="${k}" data-k="title">${t.title}</h2><p class="muted" data-text="${k}" data-k="sub" style="margin-top:4px">${t.sub}</p></div>
+      ${progressHTML(r)}
+      ${assigned ? statsHTML(r, 'guest') : ''}
+      <div class="card">
+        ${assigned ? `<div class="person"><div class="av">${DRIVER.initials}</div><div class="who"><b>${DRIVER.name}</b><small>${DRIVER.car}</small></div><span class="plate">${DRIVER.plate}</span></div>`
+                   : `<div class="person"><div class="av" style="background:var(--beige)">…</div><div class="who"><b>Waiting for a driver</b><small>You can message them once they accept</small></div></div>`}
+        <div class="actions">
+          <button class="act" data-act="openChat" data-role="guest" data-ride="${r.id}" ${assigned ? '' : 'disabled'}>${I.chat}Message${r.unread.guest ? `<span class="badge">${r.unread.guest}</span>` : ''}</button>
+          <a class="act" href="tel:" title="Connects through the hotel line; your number stays private">${I.phone}${assigned ? 'Call Driver' : 'Call Front Desk'}</a>
+        </div>
+      </div>
+      <div class="card">${routeMini(r)}${r.note ? `<p class="muted">“${esc(r.note)}”</p>` : ''}</div>
+      ${canCancel ? `<button class="btn danger" data-act="cancelRide" data-ride="${r.id}">${S.confirmCancel===r.id ? 'Tap again to cancel this ride' : 'Cancel Ride'}</button>` : ''}
+    </div></div>`;
+}
+function completeView(r){
+  return `<div class="scroll"><div class="sheet" style="padding-top:34px;text-align:center;gap:18px">
+    <div style="font-size:44px">✓</div><h2>Ride Complete</h2>
+    <p class="muted">You arrived at ${PLACES[r.dropoff].name} at ${fmtTime(r.completedAt)}.</p>
+    <h3>How was your ride?</h3>
+    <div class="stars">${[1,2,3,4,5].map(n => `<button data-act="rate" data-ride="${r.id}" data-v="${n}" class="${r.rating>=n?'on':''}">★</button>`).join('')}</div>
+    ${tipButton(r)}
+    <div class="promo">10% off your next meal at BLDG Restaurant.</div>
+    <button class="btn" data-act="doneRide" data-ride="${r.id}">${r.rating ? 'Submit Feedback' : 'Done'}</button>
+    <button class="btn ghost" data-act="doneRide" data-ride="${r.id}" data-again="1">Request Another Ride</button></div></div>`;
+}
+function tipButton(r){
+  if (!r.driver?.tipLink) return '';
+  return r.tipped
+    ? `<button class="tipbtn done" data-act="tip" data-ride="${r.id}">${I.heart}Grazzy tip page opened · open again</button>`
+    : `<button class="tipbtn" data-act="tip" data-ride="${r.id}">${I.heart}Tip ${r.driver.first} for great service</button>`;
+}
+function tipSheetHTML(){
+  const r = S.tipSheet && byId(S.tipSheet); if (!r) return '';
+  const enter = S.tipEnter; S.tipEnter = false;
+  return `<div class="scrim" data-act="closeTip"><div class="tipsheet ${enter ? 'enter' : ''}" data-stop>
+    <div class="person"><div class="av">${r.driver.initials}</div><div class="who"><b>Tip ${r.driver.name}</b><small>${fmtWhen(r.completedAt || r.created)} · to ${PLACES[r.dropoff].short}</small></div></div>
+    <p>Your ride is complimentary. Tips are always optional and go to ${r.driver.first} through <b>Grazzy</b>, Hotel Marcel's tipping partner.</p>
+    <ul><li>${I.check}Choose any amount on Grazzy — Apple Pay, Google Pay, card, or charge to your room.</li>
+        <li>${I.lock}We don't send Grazzy your name, room, phone, or trip details. Only ${r.driver.first}'s tip page opens.</li></ul>
+    <a class="btn brown" style="text-align:center;text-decoration:none;display:flex;gap:8px;justify-content:center;align-items:center" href="${esc(r.driver.tipLink)}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" data-act="tipOpened" data-ride="${r.id}">Continue to Grazzy ${I.ext}</a>
+    <button class="btn ghost" data-act="closeTip">Not now</button></div></div>`;
+}
+function guestRides(up){
+  const past = S.rides.filter(r => ['completed','cancelled'].includes(r.status)).reverse();
+  const card = r => {
+    const tag = r.status === 'confirmed' ? `<span class="tag green">Confirmed</span>` : r.status === 'scheduled' ? `<span class="tag amber">Awaiting driver</span>`
+              : r.status === 'completed' ? `<span class="tag grey">Completed</span>` : `<span class="tag red">Cancelled</span>`;
+    const isUp = ['scheduled','confirmed'].includes(r.status);
+    return `<div class="card"><div class="row between"><b style="font-weight:500">${r.when ? fmtWhen(r.when) : fmtWhen(r.created)}</b>${tag}</div>
+      ${routeMini(r)}
+      ${r.status === 'confirmed' ? `<div class="person"><div class="av" style="width:34px;height:34px;font-size:13px">${DRIVER.initials}</div><div class="who"><b>${DRIVER.name} will drive</b><small>${DRIVER.car} · ${DRIVER.plate}</small></div></div>` : ''}
+      ${r.status === 'completed' && r.driver?.tipLink ? tipButton(r) : ''}
+      ${isUp ? `<p class="fine">Pickup ${fromNow(r.when)} · ${r.pax} passenger${r.pax>1?'s':''}${r.note ? ` · “${esc(r.note)}”` : ''}</p>
+      <div class="actions">
+        ${r.status === 'confirmed' ? `<button class="act" data-act="openChat" data-role="guest" data-ride="${r.id}">${I.chat}Message${r.unread.guest ? `<span class="badge">${r.unread.guest}</span>` : ''}</button>` : ''}
+        <button class="act" data-act="edit" data-ride="${r.id}">${I.clock}Change</button>
+        <button class="act" data-act="cancelRide" data-ride="${r.id}" style="color:var(--red)">${S.confirmCancel===r.id ? 'Tap to confirm' : 'Cancel'}</button></div>` : ''}</div>`;
+  };
+  return `<div class="scroll"><div class="list">
+    <div class="row between"><h2>My rides</h2><button class="btn sm" data-act="newScheduled">${'+ Schedule'}</button></div>
+    <h3>Upcoming</h3>${up.length ? up.map(card).join('') : `<div class="empty">No scheduled rides.<br/>Book ahead for airport runs, dinners, or class.</div>`}
+    ${past.length ? `<h3>Past</h3>${past.map(card).join('')}` : ''}</div></div>`;
+}
+
+/* ======================= Views: driver ======================= */
+function driverHTML(){
+  const r = driverRide();
+  const chatRide = chatTarget.driver && S.rides.find(x => x.id === chatTarget.driver) || r;
+  const queueCount = S.rides.filter(x => x.status === 'requested' || x.status === 'scheduled').length;
+  return `${statusbar()}
+    <div class="appbar"><div class="brand">Hotel Marcel<small>Driver · ${DRIVER.name}</small></div><span class="online">Available</span></div>
+    <div class="body">${r && S.driverTab === 'queue' ? driverRideView(r) : driverQueue()}${toastHTML('driver')}${S.chat.driver && chatOpenFor(chatRide) ? chatHTML('driver', chatRide) : ''}</div>
+    <nav class="tabbar">
+      <button data-act="dtab" data-v="queue" class="${S.driverTab==='queue'?'on':''}">${I.car}${r ? 'Current ride' : 'Ride Queue'}${queueCount && !r ? `<span class="badge">${queueCount}</span>` : ''}</button>
+      <button data-act="dtab" data-v="sched" class="${S.driverTab==='sched'?'on':''}">${I.cal}Scheduled${r && queueCount ? `<span class="badge">${queueCount}</span>` : ''}</button>
+    </nav>`;
+}
+function reqCard(r){
+  const pu = PLACES[r.pickup], dr = PLACES[r.dropoff], busy = !!driverRide();
+  const L = plen(r.tripPts);
+  const head = r.when ? `<span class="tag ${r.status==='confirmed'?'green':'amber'}">${r.status==='confirmed'?'Confirmed':'Scheduled'} · ${fmtWhen(r.when)}</span>` : `<span class="tag amber">Now</span>`;
+  let btns;
+  if (r.status === 'requested') btns = `<button class="btn green" data-act="accept" data-ride="${r.id}" ${busy?'disabled':''}>${busy ? 'Finish your current ride first' : 'Accept ride'}</button>`;
+  else if (r.status === 'scheduled') btns = `<button class="btn" data-act="acceptLater" data-ride="${r.id}">Accept for ${fmtTime(r.when)}</button>`;
+  else btns = `<div class="actions"><button class="act" data-act="openChat" data-role="driver" data-ride="${r.id}">${I.chat}Message${r.unread.driver ? `<span class="badge">${r.unread.driver}</span>` : ''}</button>
+       <button class="act" data-act="startNow" data-ride="${r.id}" ${busy?'disabled':''} style="background:var(--dark);color:#fff">${I.car}Start ride</button></div>`;
+  return `<div class="reqcard ${r.status==='requested'?'now':''}"><div class="row between"><b style="font-weight:500">${GUEST.name}</b>${head}</div>
+    ${routeMini(r)}
+    <div class="meta"><span>${r.pax} passenger${r.pax>1?'s':''}</span><span>${miles(L)} mi · ~${etaMin(L)} min</span>${r.when ? `<span>${fromNow(r.when)}</span>` : `<span>requested ${fmtTime(r.created)}</span>`}</div>
+    ${r.note ? `<p class="muted">“${esc(r.note)}”</p>` : ''}${btns}</div>`;
+}
+function driverQueue(){
+  const now = S.rides.filter(r => r.status === 'requested');
+  const later = upcoming();
+  if (S.driverTab === 'sched') return `<div class="scroll"><div class="list"><h2>Scheduled</h2>
+    ${later.length ? later.map(reqCard).join('') : '<div class="empty">No scheduled rides</div>'}</div></div>`;
+  return `<div class="scroll"><div class="map h-sm">${mapSVG(null, {pickup:'hotel', dropoff:''})}</div><div class="list">
+    <h2>Ride Queue</h2>${now.length ? now.map(reqCard).join('') : '<div class="empty">No rides in queue</div>'}
+    ${later.length ? `<h3>Coming up</h3>${later.slice(0,2).map(reqCard).join('')}` : ''}</div></div>`;
+}
+function driverRideView(r){
+  const t = tripText(r, 'driver'), k = `${r.id}-driver`, lv = live(r);
+  const btn = {
+    en_route:   `<button class="btn" data-act="arrived" data-ride="${r.id}">Arrived at Pickup</button>`,
+    at_pickup:  `<button class="btn brown" data-act="pickedUp" data-ride="${r.id}">Guest Picked Up</button>`,
+    in_progress:`<button class="btn green ${lv.p>=1?'pulse':''}" data-act="complete" data-ride="${r.id}">Complete ride</button>`,
+  }[r.status];
+  return `<div class="scroll">
+    <div class="map h-md">${mapSVG(r)}<span class="map-chip" data-text="${k}" data-k="chip">${t.chip}</span></div>
+    <div class="sheet">
+      <div><h2 data-text="${k}" data-k="title">${t.title}</h2><p class="muted" data-text="${k}" data-k="sub" style="margin-top:4px">${t.sub}</p></div>
+      ${progressHTML(r)}
+      ${statsHTML(r, 'driver')}
+      <div class="card"><div class="person"><div class="av">${GUEST.initials}</div><div class="who"><b>${GUEST.name}</b><small>${r.pax} passenger${r.pax>1?'s':''}</small></div></div>
+        ${r.note ? `<p class="muted">“${esc(r.note)}”</p>` : ''}
+        <div class="actions"><button class="act" data-act="openChat" data-role="driver" data-ride="${r.id}">${I.chat}Message${r.unread.driver ? `<span class="badge">${r.unread.driver}</span>` : ''}</button>
+          <a class="act" href="tel:">${I.phone}Call Guest</a></div></div>
+      ${btn}
+      <div class="card">${routeMini(r)}</div>
+    </div></div>`;
+}
+
+/* ======================= Render ======================= */
+function render(which){
+  const active = document.activeElement, key = active?.dataset?.draft ? `[data-draft="${active.dataset.draft}"]`
+               : active?.dataset?.model ? `[data-phone="${active.closest('[data-phone]')?.dataset.phone}"] [data-model="${active.dataset.model}"]` : null;
+  const selPos = key && 'selectionStart' in active && active.type !== 'select-one' ? [active.selectionStart, active.selectionEnd] : null;
+  const scrolls = {};
+  document.querySelectorAll('.screen .scroll').forEach(el => scrolls[el.closest('.screen').id] = el.scrollTop);
+  if (!which || which === 'guest') $('#guest').innerHTML = guestHTML();
+  if (!which || which === 'driver') $('#driver').innerHTML = driverHTML();
+  document.querySelectorAll('.screen .scroll').forEach(el => { const id = el.closest('.screen').id; if (scrolls[id] != null) el.scrollTop = scrolls[id]; });
+  document.querySelectorAll('[data-msgs]').forEach(el => el.scrollTop = el.scrollHeight);
+  if (key){ const el = $(key); if (el){ el.focus(); if (selPos) el.setSelectionRange(...selPos); } }
+}
+
+/* ======================= Events ======================= */
+const byId = id => S.rides.find(r => r.id === +id);
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const a = b.dataset.act, r = b.dataset.ride && byId(b.dataset.ride), f = S.form;
+  if (a !== 'cancelRide') S.confirmCancel = null;
+  switch (a){
+    case 'mode': f.mode = b.dataset.v; break;
+    case 'day':  f.day = +b.dataset.v; f.time = ''; break;
+    case 'pax':  f.pax = Math.min(6, Math.max(1, f.pax + +b.dataset.v)); break;
+    case 'gtab': S.guestTab = b.dataset.v; break;
+    case 'dtab': S.driverTab = b.dataset.v; break;
+    case 'newScheduled': S.guestTab = 'ride'; f.mode = 'later'; break;
+    case 'request': {
+      const later = f.mode === 'later', ride = newRide(later ? whenFromForm() : null);
+      S.rides.push(ride);
+      sys(ride, later ? `Ride scheduled for ${fmtWhen(ride.when)}` : `Ride requested · ${fmtTime(Date.now())}`);
+      toast('driver', later ? `New scheduled ride: ${fmtWhen(ride.when)} to ${PLACES[ride.dropoff].short}` : `New ride request from ${GUEST.first} to ${PLACES[ride.dropoff].short}`);
+      if (later){ S.guestTab = 'rides'; toast('guest', `Scheduled for ${fmtWhen(ride.when)}. We’ll confirm your driver.`); }
+      Object.assign(f, {dropoff:'', note:'', pax:1, mode:'now'});
+      break; }
+    case 'edit':
+      S.editing = r.id; S.guestTab = 'ride';
+      Object.assign(f, {mode:'later', pickup:r.pickup, dropoff:r.dropoff, pax:r.pax, note:r.note,
+        day: Math.round((new Date(r.when).setHours(0,0,0,0) - dayStart(0)) / 864e5),
+        time: new Date(r.when).toTimeString().slice(0,5)});
+      break;
+    case 'saveEdit': {
+      const ride = byId(S.editing), old = ride.when;
+      Object.assign(ride, {pickup:f.pickup, dropoff:f.dropoff, pax:f.pax, note:f.note.trim(), when:whenFromForm(), tripPts:route(PLACES[f.pickup], PLACES[f.dropoff], true)});
+      if (ride.when !== old){ sys(ride, `Pickup time changed to ${fmtWhen(ride.when)}`); if (ride.driver) toast('driver', `${GUEST.first} moved their pickup to ${fmtWhen(ride.when)}`); }
+      S.editing = null; S.guestTab = 'rides'; Object.assign(f, {dropoff:'', note:'', pax:1, mode:'now'});
+      break; }
+    case 'cancelEdit': S.editing = null; S.guestTab = 'rides'; Object.assign(f, {dropoff:'', note:'', pax:1, mode:'now'}); break;
+    case 'cancelRide':
+      if (S.confirmCancel !== r.id){ S.confirmCancel = r.id; break; }
+      if (r.status === 'en_route'){ const lv = live(r); S.driverPos = r.approachPts[lv.pos.seg]; }
+      r.status = 'cancelled'; S.confirmCancel = null; S.chat.guest = false;
+      if (chatTarget.driver === r.id) S.chat.driver = false;
+      toast('driver', `${GUEST.first} cancelled the ${r.when ? fmtWhen(r.when) + ' ' : ''}ride.`);
+      break;
+    case 'accept':
+      startDriving(r);
+      sys(r, `${DRIVER.first} accepted your ride · ${fmtTime(Date.now())}`);
+      toast('guest', `${DRIVER.first} accepted — ${DRIVER.car}, ${DRIVER.plate}.`);
+      S.driverTab = 'queue';
+      break;
+    case 'acceptLater':
+      assign(r); r.status = 'confirmed';
+      sys(r, `${DRIVER.first} confirmed your ${fmtWhen(r.when)} pickup`);
+      toast('guest', `${DRIVER.first} confirmed your ride for ${fmtWhen(r.when)}.`, {act:'openChat', ride:r.id});
+      break;
+    case 'startNow':
+      startDriving(r);
+      sys(r, `${DRIVER.first} is on the way · ${fmtTime(Date.now())}`);
+      toast('guest', `${DRIVER.first} is on the way for your ${fmtTime(r.when)} pickup.`);
+      S.driverTab = 'queue'; S.guestTab = 'ride';
+      break;
+    case 'arrived':
+      r.progress = 1; r.status = 'at_pickup'; r.arrivedAt = Date.now();
+      sys(r, `${DRIVER.first} arrived at ${PLACES[r.pickup].short} · ${fmtTime(Date.now())}`);
+      toast('guest', `Your driver has arrived — ${DRIVER.car}, plate ${DRIVER.plate}.`);
+      break;
+    case 'pickedUp':
+      r.status = 'in_progress'; r.progress = 0;
+      sys(r, `Picked up · on the way to ${PLACES[r.dropoff].short}`);
+      break;
+    case 'complete':
+      r.status = 'completed'; r.progress = 1; r.completedAt = Date.now();
+      S.driverPos = {x:PLACES[r.dropoff].x, y:PLACES[r.dropoff].y};
+      S.chat.guest = S.chat.driver = false;
+      sys(r, `Ride complete · ${fmtTime(Date.now())}`);
+      break;
+    case 'rate': r.rating = +b.dataset.v; break;
+    case 'tip': S.tipSheet = r.id; S.tipEnter = true; break;
+    case 'closeTip': if (e.target.closest('[data-stop]') && !e.target.closest('button')) return; S.tipSheet = null; break;
+    case 'tipOpened': r.tipped = true; S.tipSheet = null; setTimeout(render); return;
+    case 'doneRide': r.dismissed = true; if (r.rating) toast('guest', 'Thanks for your feedback!'); break;
+    case 'openChat': {
+      const role = b.dataset.role; S.chat[role] = S.chatEnter[role] = true; chatTarget[role] = +b.dataset.ride;
+      byId(b.dataset.ride).unread[role] = 0; S.toasts[role] = null;
+      if (S.view !== 'both') { S.view = role; syncView(); }
+      break; }
+    case 'closeChat': S.chat[b.dataset.role] = false; S.drafts[b.dataset.role] = ''; render(b.dataset.role === 'guest' ? 'driver' : 'guest'); break;
+    case 'quick': { const role = b.dataset.role; chatTarget[role] ??= (role === 'guest' ? guestRide() : driverRide())?.id;
+      sendTo(role, b.dataset.text); return; }
+  }
+  render();
+});
+function sendTo(role, text){
+  const r = byId(chatTarget[role]) || (role === 'guest' ? guestRide() : driverRide());
+  text = text.trim();
+  if (!r || !text || !chatOpenFor(r)) return;
+  r.messages.push({from:role, text, t:Date.now()});
+  S.drafts[role] = '';
+  const other = role === 'guest' ? 'driver' : 'guest';
+  const otherSees = S.chat[other] && chatTarget[other] === r.id && S.view === 'both';
+  if (!otherSees){
+    r.unread[other]++;
+    toast(other, `<b>${esc(role === 'guest' ? GUEST.first : DRIVER.first)}:</b> ${esc(text)}`, {act:'openChat', ride:r.id});
+  }
+  render();
+}
+document.addEventListener('submit', e => {
+  const fm = e.target.closest('[data-send]'); if (!fm) return;
+  e.preventDefault(); sendTo(fm.dataset.send, S.drafts[fm.dataset.send]);
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.draft){
+    const role = el.dataset.draft; S.drafts[role] = el.value;
+    el.form.querySelector('button').disabled = !el.value.trim();
+    render(role === 'guest' ? 'driver' : 'guest');   // live "typing…" on the other phone
+  } else if (el.dataset.model === 'note'){ S.form.note = el.value; }
+});
+document.addEventListener('change', e => {
+  const m = e.target.dataset.model; if (!m || m === 'note') return;
+  S.form[m] = e.target.value; render();
+});
+
+// Guest / Driver / Both switch
+function syncView(){
+  $('#stage').dataset.view = S.view;
+  document.querySelectorAll('#viewsw button').forEach(b => b.classList.toggle('on', b.dataset.view === S.view));
+}
+$('#viewsw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.view = b.dataset.view; syncView(); render();
+});
+if (matchMedia('(max-width:880px)').matches){ S.view = 'guest'; syncView(); }
+
+/* ======================= Seed ======================= */
+// One ride already booked for tomorrow morning so the scheduling flow has something to show.
+(() => {
+  const keep = {...S.form};
+  Object.assign(S.form, {pickup:'hotel', dropoff:'airport', pax:2, note:'Two suitcases'});
+  const d = dayStart(1); d.setHours(8, 30);
+  const r = newRide(d.getTime()); sys(r, `Ride scheduled for ${fmtWhen(r.when)}`);
+  S.rides.push(r);
+  S.form = keep;
+})();
+render();
+</script>
+</body>
+</html>
